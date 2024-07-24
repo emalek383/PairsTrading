@@ -1,10 +1,9 @@
 # Pairs-Trading
-This project explores pairs trading, i.e. exploits the spread between two assets which mean revert.
-
-The bulk of the code consists of the PairsTrading() class, which allows us to analyse a pair of assets' potential for pairs trading.
+Web app for finding cointegrated stock pairs to use in pairs trading, i.e. exploits the spread between two assets which mean revert.
 
 Functionalities:
-- Test for cointegration of assets (via EG/ADF test)
+- Test for cointegration of assets in a stock basket (via EG/ADF test)
 - Compute hedge ratio for spread (using simple moving average)
 - Estimate half-life by fitting Ornstein-Uhlenbeck Process
-- Evalute trading strategy based on bollinger bands entry criteria
+- Use spread of asset prices, log(asset prices) or ratio of asset prices for signal.
+- Vectorised evaluation of trading strategy based on bollinger bands entry criteria
