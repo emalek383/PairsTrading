@@ -2,3 +2,4 @@ appdirs
 matplotlib
 yfinance
 scipy
+statsmodels
