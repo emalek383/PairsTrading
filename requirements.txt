@@ -1,5 +1,6 @@
 appdirs
 matplotlib
+seaborn
 yfinance
 scipy
 statsmodels
