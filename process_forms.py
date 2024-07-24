@@ -6,7 +6,6 @@ from PairsTrading import PairsTrading
 from cointegration_analysis import find_coint_pairs
 from helper import is_in_universe
 from data_loader import get_data
-from test_data import get_test_data
 
 DEFAULT_STOCKS = "AAPL, NFLX, GOOG, MSFT, NVDA, AMD, MRVL, TSEM, AMZN, TSM, INTC, ASML, QCOM"
 now = dt.datetime.today()
