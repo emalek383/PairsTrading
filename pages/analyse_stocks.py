@@ -29,9 +29,11 @@ with st.sidebar:
 cointegration_display = st.container(border = False)
 cointegration_display.header("Cointegration test of pairs")
 if not state.loaded_stocks:
-    process_stock_form(stock_selection_form, cointegration_display)
+    errors = process_stock_form()
+    if errors:
+        stock_selection_form.error(errors)
     state.loaded_stocks = True
     
-setup_stock_selection_form(stock_selection_form, cointegration_display)
+setup_stock_selection_form(stock_selection_form)
 
 setup_cointegration_display(cointegration_display)

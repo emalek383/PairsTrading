@@ -8,7 +8,7 @@ state = st.session_state
 
 def setup_cointegration_display(display):
     """
-    Display the a list of cointegrating pairs from state.stock_universe, the cointegration matrix,
+    Display the a list of cointegrating pairs from state.universe, the cointegration matrix,
     and a simple selection form for cointegrating pairs to be analysed.
 
     Parameters
@@ -23,9 +23,11 @@ def setup_cointegration_display(display):
 
     """
     
+    stocks = ", ".join(state.universe.stocks)
+    display.write(f"Analysing stock basket {stocks} from {state.universe.start_date.strftime('%d/%m/%Y')} to {state.universe.end_date.strftime('%d/%m/%Y')}.")
+    
     if len(state.pairs) > 0:
-        stocks = ", ".join(state.universe.stocks)
-        display.write(f"Found {len(state.pairs)} cointegrating pairs amongst {stocks}:")
+        display.write(f"Found {len(state.pairs)} cointegrating pairs:")
         for ticker1, ticker2, pvalue in state.pairs:
             display.write(f"({ticker1}, {ticker2}), p-value: {pvalue:.4f}")
     

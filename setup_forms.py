@@ -15,7 +15,7 @@ DATE_FORMAT = "DD/MM/YYYY"
 
 state = st.session_state
 
-def setup_stock_selection_form(form, output):
+def setup_stock_selection_form(form):
     """
     Setup the stock selection form.
 
@@ -56,7 +56,9 @@ def setup_stock_selection_form(form, output):
     
     if submit_button:
         state.loaded_stocks = True
-        process_stock_form(form, output, universe, start_date, end_date, significance)
+        errors = process_stock_form(universe, start_date, end_date, significance)
+        if errors:
+            form.error(errors)
     
     return
 
@@ -155,4 +157,6 @@ def setup_pairs_selection_form(form):
         
     submit_button = form.button(label = "Analyse pair")
     if submit_button:
-        process_pairs_selection_form(form, selected_pair, start_date, end_date, model.lower(), lookback_window, upper_entry, -lower_entry)
+        errors = process_pairs_selection_form(selected_pair, start_date, end_date, model.lower(), lookback_window, upper_entry, -lower_entry)
+        if errors:
+            form.error(errors)

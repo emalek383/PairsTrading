@@ -1,36 +1,43 @@
 import yfinance as yf
-from contextlib import contextmanager
-import sys
-import io
+import pandas as pd
 
-@contextmanager
-def suppress_stdout():
-    new_stdout = io.StringIO()
-    old_stdout = sys.stdout
-    sys.stdout = new_stdout
-    try:
-        yield
-    finally:
-        sys.stdout = old_stdout
-
-def get_data(stocks, start, end):
+def download_data(stocks, start, end):
     """
     Download stock data from yahoo finance.
-    
-    Args:
-        stocks: list of stock tickers
-        start: start date in datetime format
-        end: end date in datetime format
-    
-    Returns:
-        stockData: pd.DataFrame with close of stock data
+
+    Parameters
+    ----------
+    stocks : list(str)
+        List of stock tickers.
+    start : datetime
+        Start date.
+    end : datetime
+        End date.
+
+    Returns
+    -------
+    stockData : pd.DataFrame
+        Dataframe containing the closing price of the stock data.
+
     """
-    # Disable progress bar
-    #yf.pdr_override()
-    yf.set_tz_cache_location(None)
-        
-    with suppress_stdout():
-        stockData = yf.download(stocks, start=start, end=end, progress=False)
+    
+    stockData = yf.download(stocks, start=start, end=end, progress=False)
         
     stockData = stockData['Close']
     return stockData
+
+
+def load_default_stocks():
+    """
+    Load default stock data that has been presaved.
+
+    Returns
+    -------
+    stock_data : pd.DataFrame
+        DataFrame with the closing price of the presaved stock data.
+
+    """
+    stock_filepath = "data/default_stock_data.csv"
+    stock_data = pd.read_csv(stock_filepath, index_col=0, parse_dates=True)
+    
+    return stock_data
