@@ -57,7 +57,7 @@ class StockUniverse():
                  cov_matrix = []
                  ):
         """
-        Constructs the attributes of the stock universe object.
+        Construct the attributes of the stock universe object.
 
         Parameters
         ----------

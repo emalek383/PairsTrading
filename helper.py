@@ -1,5 +1,8 @@
 import datetime as dt
 from dateutil.relativedelta import relativedelta
+from statsmodels.tsa.stattools import adfuller
+import math
+
 now = dt.datetime.today()
 DEFAULT_START = now + relativedelta(years = -1)
 DEFAULT_END = now
@@ -127,3 +130,93 @@ def is_in_universe(pair, universe, start_date = None, end_date = None):
             return True
     else:
         return False
+    
+def calc_APR(returns):
+    """
+    Calculate the annualised percentage return of a set of daily returns.
+
+    Parameters
+    ----------
+    returns : pd.DataFrame
+        DataFrame of returns to be turned into APR.
+
+    Returns
+    -------
+    float
+        APR.
+
+    """
+        
+    returns = returns.dropna()
+    if len(returns) == 0:
+        return 0.0
+    return ((1 + returns).product())**(252 / len(returns)) - 1
+    
+def calc_Sharpe(returns):
+    """
+    Calculate the Sharpe Ratio from a set of daily returns.
+
+    Parameters
+    ----------
+    returns : pd.Series.
+        Daily returns.
+        
+    Returns
+    -------
+    float
+        Sharpe Ratio (annualised).
+
+    """
+    returns = returns.dropna()
+    if len(returns) == 0:
+        return 0.0
+    return math.sqrt(252) * returns.mean()/returns.std()
+    
+def calc_max_drawdown(cum_returns):
+    """
+    Calculate the maximum drawdown from set of cumulative returns.
+
+    Parameters
+    ----------
+    cum_returns : pd.Series
+        Cumulative returns.
+
+    Returns
+    -------
+    max_drawdown : float
+        Maximum drawdown.
+
+    """
+    cum_returns = cum_returns[cum_returns != 0]
+        
+    if len(cum_returns) == 0:
+        return None
+        
+    running_max = cum_returns.cummax()
+    drawdown = (cum_returns - running_max) / running_max
+    max_drawdown = drawdown.min()
+        
+    return max_drawdown
+    
+def check_stationarity(asset_list):
+    """
+    Check the stationariy of each asset in the asset_list using the ADF test.
+
+    Parameters
+    ----------
+    asset_list : list(pd.Series)
+        List of assets to be tested.
+
+    Returns
+    -------
+    results : list(tuple(str, float, float))
+        Results of the ADF test in form [(ticker, score, p-value)] for each asset.
+
+    """
+        
+    results = []
+    for asset in asset_list:
+        score, pvalue, *_ = adfuller(asset)
+        results.append((asset.name, score, pvalue))
+            
+    return results
