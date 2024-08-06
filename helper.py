@@ -1,3 +1,9 @@
+""" Module with helper functions, which do not require streamlit or the PairsTrading class, for the Pairs Trading app. 
+
+Mainly consists of formatting functions and some general functions computing performances (APR, max drawdown, Sharpe...)
+
+"""
+
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from statsmodels.tsa.stattools import adfuller

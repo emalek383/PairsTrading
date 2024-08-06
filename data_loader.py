@@ -1,3 +1,5 @@
+""" Module to download stock data from yfinance and default stocks. """
+
 import yfinance as yf
 import pandas as pd
 

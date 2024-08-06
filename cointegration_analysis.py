@@ -1,3 +1,5 @@
+""" Module to run the cointegration analysis between two pairs of stocks. """
+
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.stattools import coint

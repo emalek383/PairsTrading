@@ -1,3 +1,5 @@
+""" Module for setting up the UI forms in streamlit. """
+
 import streamlit as st
 import datetime as dt
 from dateutil.relativedelta import relativedelta
@@ -68,7 +70,7 @@ def setup_simple_pairs_selection_form(form):
 
     Parameters
     ----------
-    form : st.form
+    form : st.container
         Will become the pairs selection form.
 
     Returns
@@ -99,7 +101,7 @@ def setup_pairs_selection_form(form):
 
     Parameters
     ----------
-    form : st.form
+    form : st.container
         Will become the pairs selection form.
 
     Returns

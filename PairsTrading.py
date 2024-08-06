@@ -1,3 +1,5 @@
+"""Module creating the PairsTrading class for pairs trading."""
+
 import math
 import numpy as np
 import pandas as pd
@@ -254,7 +256,6 @@ class PairsTrading():
         """
         
         if lookback_window and self.lookback_window != lookback_window:
-            print(f'Resetting lookback window from {self.lookback_window} to {lookback_window}')
             self.lookback_window = lookback_window
             self.calc_rolling_hedge_ratio()
 

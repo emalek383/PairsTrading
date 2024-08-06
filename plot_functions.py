@@ -1,3 +1,5 @@
+""" Module to plot graphs for Pairs Trading. """
+
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -156,9 +158,8 @@ def plot_all(pair):
     first_valid_date = pair.spread_mave.first_valid_index()
     ax_strategy.set_xlim(left=first_valid_date)
 
-    # Remove x-axis label from upper subplot
     ax_trades.set_xlabel('')
 
-    # Adjust layout and show plot
     plt.tight_layout()
+    
     return fig

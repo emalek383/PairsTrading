@@ -1,16 +1,12 @@
+""" Module to process the streamlit forms. """
+
 import streamlit as st
-import datetime as dt
-from dateutil.relativedelta import relativedelta
 from StockUniverse import StockUniverse
 from PairsTrading import PairsTrading
 from cointegration_analysis import find_coint_pairs
 from helper import is_in_universe
-from data_loader import download_data, load_default_stocks
+from data_loader import load_default_stocks
 
-# DEFAULT_STOCKS = "AAPL, NFLX, GOOG, MSFT, NVDA, AMD, MRVL, TSEM, AMZN, TSM, INTC, ASML, QCOM"
-# now = dt.datetime.today()
-# DEFAULT_START = now + relativedelta(years = -1)
-# DEFAULT_END = now
 DEFAULT_SIGNIFICANCE = 0.05
 MIN_LOOKBACK_WINDOW = 5
 
@@ -87,7 +83,7 @@ def process_stock_form(universe = None, start_date = None, end_date = None, sign
                 
                 errors += f"Failed to download {ignored_str}. Check the tickers. Will try to continue without them.\n"
                 if len(ignored) == len(cleaned_stocks):
-                    errors += f"Failed to download any stocks. There may be an issue with the Yahoo Finance connection."
+                    errors += "Failed to download any stocks. There may be an issue with the Yahoo Finance connection."
                     return errors
             
                 if len(universe.stocks) < 2:
@@ -207,16 +203,3 @@ def process_pairs_selection_form(pair, start_date, end_date, model, lookback_win
     state.selected_pair.calc_PnL()
     
     return errors
-
-def use_preloaded_data():
-    stocks = ['AAPL', 'NFLX', 'GOOG', 'MSFT', 'NVDA', 'AMD', 'MRVL', 'TSEM', 'AMZN', 'TSM', 'INTC', 'ASML', 'QCOM']
-    start_date = '2023-07-24'
-    end_date = '2024-07-24'
-        
-    universe = StockUniverse(stocks, start_date, end_date)
-    
-    stock_filepath = "data/default_stock_data.csv"
-
-    universe.stock_data = pd.read_csv(stock_filepath, index_col=0, parse_dates=True)
-    
-    return universe

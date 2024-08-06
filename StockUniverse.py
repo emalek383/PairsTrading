@@ -1,3 +1,5 @@
+""" Module creating the StockUniverse class. """
+
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from data_loader import download_data
@@ -25,30 +27,19 @@ class StockUniverse():
         Mean returns of stocks
     cov_matrix : np.array
         Covariance matrix
-    max_SR_portfolio : portfolio
-        Max Sharpe Ratio Portfolio
-    min_vol_portfolio : portfolio
-        Min Vol Portfolio
-    min_returns : float
-        Minimum annualised returns achievable by a portfolio in the universe
-    max_returns : float
-        Maximum annualised returns achievable by a portfolio in the universe
-    min_vol : float
-        Minimum annualised volatility achievable by a portfolio in the universe
-    max_vol : float
-        Maximum annualised volatility achievable by a portfolio in the universe
         
     Methods
     -------
     get_data():
-        Downloads stock data.
-        Returns the tickers of stocks that could not be downloaded.
+        Download stock data.
+        Return the tickers of stocks that could not be downloaded.
     
     calc_mean_returns_cov():
-        Calculates the mean returns and covariance matrix from stock data.
-        Updates mean_returns and cov_matrix.
+        Calculate the mean returns and covariance matrix from stock data.
+        Update `mean_returns` and `cov_matrix`.
     
     """
+    
     def __init__(self, 
                  stocks, 
                  start_date = dt.datetime.today() + relativedelta(years = -1), 
@@ -118,7 +109,7 @@ class StockUniverse():
     def calc_mean_returns_cov(self):
         """
         Compute mean returns and covariance matrix of stock universe from the (downloaded) stock data.
-        Will set the risk-free-rate from downloaded bonds data if it has not yet been set.
+        Set the risk-free-rate from downloaded bonds data if it has not yet been set.
         Calculate the max Sharpe Ratio and min vol portfolios and upadte the min/max excess returns/vol.
         Update all these attributes.
 
@@ -129,8 +120,6 @@ class StockUniverse():
         """
         
         returns = self.stock_data.pct_change()
-        #mean_returns = get_mean_returns(returns)
         cov_matrix = returns.cov()
         
-        #self.mean_returns = mean_returns
         self.cov_matrix = cov_matrix
