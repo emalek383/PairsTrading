@@ -354,7 +354,7 @@ class PairsTrading():
         short_signals.iloc[0] = 0
         short_signals = short_signals.ffill()
         self.signals = long_signals + short_signals
-        self.signals[-1] = 0
+        self.signals.iloc[-1] = 0
         
         # Keep track of trades
         trade_starts = self.signals.diff().ne(0) & self.signals.ne(0)
