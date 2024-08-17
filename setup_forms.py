@@ -9,6 +9,7 @@ from helper import get_default_values, get_pair_choices, format_pairs
 DEFAULT_STOCKS = "AAPL, NFLX, GOOG, MSFT, NVDA, AMD, MRVL, TSEM, AMZN, TSM, INTC, ASML, QCOM"
 now = dt.datetime.today()
 DEFAULT_START = now + relativedelta(years = -1)
+DEFAULT_MIN = now + relativedelta(years = -30)
 DEFAULT_END = now
 DEFAULT_SIGNIFICANCE = 0.05
 MODEL_OPTIONS = ['Linear', 'Log', 'Ratio']
@@ -34,19 +35,21 @@ def setup_stock_selection_form(form):
     
     def_stocks, def_start_date, def_end_date = get_default_values(state)
     
-    universe = form.text_input("Enter your stocks, separated by commas",
-                               help = "Enter the stock tickers separated by commas",
+    universe = form.text_input("Enter your assets, separated by commas",
+                               help = "Enter the asset tickers separated by commas",
                                value = def_stocks)
 
     start_date = form.date_input("Choose the start date for the analysis", 
                                  help = "Latest start date is 1 month ago",
                                  value = def_start_date,
                                  max_value = DEFAULT_START,
+                                 min_value = DEFAULT_MIN,
                                  format = DATE_FORMAT)
     end_date = form.date_input("Choose the end date for the analysis",
                                help = "Latest end date is today", 
                                value = def_end_date,
                                max_value = now,
+                               min_value = DEFAULT_MIN,
                                format = DATE_FORMAT)
     
     significance = form.number_input("Enter the desired significance for the cointegration test",
@@ -122,7 +125,7 @@ def setup_pairs_selection_form(form):
     if len(state.pairs) == 0 or selected_pair == 'Other':
         custom_ticker1 = form.text_input("Choose asset 1")
         custom_ticker2 = form.text_input("Choose asset 2")
-        selected_pair = (custom_ticker1, custom_ticker2)
+        selected_pair = (custom_ticker1.upper(), custom_ticker2.upper())
     
     model = form.selectbox("Choose your pairs model",
                            options = MODEL_OPTIONS)

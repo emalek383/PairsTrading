@@ -49,7 +49,7 @@ def process_stock_form(universe = None, start_date = None, end_date = None, sign
         cleaned_stocks = []
         for stock in stocks:
             stock = stock.strip()
-            cleaned_stocks.append(stock)
+            cleaned_stocks.append(stock.upper())
             
         # If stocks, start and end date are the same as loaded, just use the loaded data
         
@@ -69,7 +69,7 @@ def process_stock_form(universe = None, start_date = None, end_date = None, sign
                 return errors
         
             if len(cleaned_stocks) < 2:
-                errors += "Less than two stocks entered. Need at least two stocks to look for viable pairs."
+                errors += "Less than two assets entered. Need at least two assets to look for viable pairs."
                 return errors
     
             universe = StockUniverse(cleaned_stocks, start_date, end_date)
@@ -83,11 +83,11 @@ def process_stock_form(universe = None, start_date = None, end_date = None, sign
                 
                 errors += f"Failed to download {ignored_str}. Check the tickers. Will try to continue without them.\n"
                 if len(ignored) == len(cleaned_stocks):
-                    errors += "Failed to download any stocks. There may be an issue with the Yahoo Finance connection."
+                    errors += "Failed to download any assets. There may be an issue with the Yahoo Finance connection."
                     return errors
             
                 if len(universe.stocks) < 2:
-                    errors += "Less than two stocks downloaded. Need at least two stocks to look for viable pairs."
+                    errors += "Less than two assets downloaded. Need at least two assets to look for viable pairs."
                     return errors
             
             universe.calc_mean_returns_cov()

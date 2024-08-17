@@ -23,7 +23,7 @@ if 'significance' not in state:
     state.significance = None
 
 with st.sidebar:
-    st.header("Select stocks for your analysis")
+    st.header("Select assets for your analysis")
     stock_selection_form = st.form(border = True, key = "stock_form")
     
 cointegration_display = st.container(border = False)

@@ -26,7 +26,7 @@ def setup_cointegration_display(display):
     """
     
     stocks = ", ".join(state.universe.stocks)
-    display.write(f"Analysing stock basket {stocks} from {state.universe.start_date.strftime('%d/%m/%Y')} to {state.universe.end_date.strftime('%d/%m/%Y')}.")
+    display.write(f"Analysing asset basket {stocks} from {state.universe.start_date.strftime('%d/%m/%Y')} to {state.universe.end_date.strftime('%d/%m/%Y')}.")
     
     if len(state.pairs) > 0:
         display.write(f"Found {len(state.pairs)} cointegrating pairs:")
@@ -90,7 +90,7 @@ def setup_pairs_display(display):
     else:
         display.write(f"{spread_str} is stationary: ADF p-value {pvalue:.4f}")
     
-    display.write(f"Ohrensein-Uhlenbeck half-life estimate: {state.selected_pair.half_life:.1f} days")
+    display.write(f"Ornstein-Uhlenbeck half-life estimate: {state.selected_pair.half_life:.1f} days")
     
     # Plot the spread and the two assets
     spread_tab, both_assets_tab, regression_tab = display.tabs(["Spread", "Individual Assets", "Regression of Assets"])
@@ -139,7 +139,7 @@ def setup_trading_display(display):
     results_col.write(f"Total trades: {total_trades}")
     results_col.write(f"Winning trades: {winning_trades}")
     results_col.write(f"Win rate: {win_rate:.2%}")
-    results_col.write(f"Total returns: {state.selected_pair.portfolio.cum_returns[-1]:.2%}")
+    results_col.write(f"Total returns: {state.selected_pair.portfolio.cum_returns.iloc[-1]:.2%}")
     results_col.write(f"APR: {state.selected_pair.APR:.2%}")
     results_col.write(f"Sharpe Ratio: {state.selected_pair.Sharpe:.2}")
     results_col.write(f"Max Drawdown: {state.selected_pair.max_drawdown:.2%}")
