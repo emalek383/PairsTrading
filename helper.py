@@ -199,7 +199,7 @@ def calc_max_drawdown(cum_returns):
         return None
         
     running_max = cum_returns.cummax()
-    drawdown = (cum_returns - running_max) / running_max
+    drawdown = (cum_returns - running_max) / (1 + running_max)
     max_drawdown = drawdown.min()
         
     return max_drawdown
