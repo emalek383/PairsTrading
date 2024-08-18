@@ -4,3 +4,4 @@ seaborn
 yfinance
 scipy
 statsmodels
+pykalman
