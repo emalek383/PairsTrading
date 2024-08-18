@@ -197,9 +197,7 @@ def process_pairs_selection_form(pair, start_date, end_date, method, model, look
                                        lookback_window = lookback_window,
                                        upper_entry = upper_entry,
                                        lower_entry = lower_entry)
-    
-    print(f"Method: {method}, Model: {model}, lookback_window: {lookback_window}")
-    
+        
     state.selected_pair.setup_lookback_window()
     state.selected_pair.calc_spread()
     state.selected_pair.calc_rolling_spread()
