@@ -143,13 +143,19 @@ def setup_pairs_selection_form(form):
                                max_value = DEFAULT_END,
                                format = DATE_FORMAT)
     
+    format_map = {'lookback': 'Rolling Window', 'kalman': 'Kalman Filter'}
+    
+    method = form.radio(label = "Choose estimation method for rolling hedge ratio",
+                        options = ['lookback', 'kalman'],
+                        format_func = lambda x: format_map[x])
+    
     start_end_date_difference = (end_date - start_date).days
     max_window = start_end_date_difference // 4
     
-    lookback_window = form.number_input(f"""Choose the lookback window for computing the rolling spread. 
+    lookback_window = form.number_input(f"""Choose the lookback window for computing rolling quantities. 
                                         Pick values less than {MIN_LOOKBACK_WINDOW} for automatic suggestion.
                                         Max possible: {max_window}.""",
-                                        help = f"Pick values less than {MIN_LOOKBACK_WINDOW} to have the lookback window estimated using Ohrenstein-Uhlenbeck process",
+                                        help = f"Pick values less than {MIN_LOOKBACK_WINDOW} to have the lookback window estimated using Ohrenstein-Uhlenbeck process. When using a Kalman Filter, only the std is calculated using the lookback window",
                                         min_value = 0,
                                         max_value = max_window)
     
@@ -162,6 +168,6 @@ def setup_pairs_selection_form(form):
         
     submit_button = form.button(label = "Analyse pair")
     if submit_button:
-        errors = process_pairs_selection_form(selected_pair, start_date, end_date, model.lower(), lookback_window, upper_entry, -lower_entry)
+        errors = process_pairs_selection_form(selected_pair, start_date, end_date, method, model.lower(), lookback_window, upper_entry, -lower_entry)
         if errors:
             form.error(errors)

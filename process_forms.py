@@ -130,7 +130,7 @@ def process_simple_pairs_selection_form(pair):
     
     return
 
-def process_pairs_selection_form(pair, start_date, end_date, model, lookback_window, upper_entry, lower_entry):
+def process_pairs_selection_form(pair, start_date, end_date, method, model, lookback_window, upper_entry, lower_entry):
     """
     Process the pairs selection form by initiating a PairsTrading object and calculating its attributes.
     If the two assets are not part of already loaded stock universe, set them as the stock universe and download data.
@@ -147,6 +147,8 @@ def process_pairs_selection_form(pair, start_date, end_date, model, lookback_win
         Start date of stocks to be considered, passed as datetime.
     end_date : datetime
         End date of stocks to be considered, passed as datetime.
+    method : str
+        Estimation method for rolling hedge ratio, to be passed as attribute to PairsTrading object.
     model : str
         Spread model for the pair, to be passed as attribute to PairsTrading object.
     lookback_window : int
@@ -185,15 +187,18 @@ def process_pairs_selection_form(pair, start_date, end_date, model, lookback_win
         
     pair_data = (state.universe.stock_data[pair[0]], state.universe.stock_data[pair[1]])
             
-    if lookback_window < MIN_LOOKBACK_WINDOW:
+    if method == 'lookback' and lookback_window < MIN_LOOKBACK_WINDOW:
         lookback_window = None
     
     state.selected_pair = PairsTrading(pair_data[0],
                                        pair_data[1],
+                                       method = method,
                                        model = model,
                                        lookback_window = lookback_window,
                                        upper_entry = upper_entry,
                                        lower_entry = lower_entry)
+    
+    print(f"Method: {method}, Model: {model}, lookback_window: {lookback_window}")
     
     state.selected_pair.setup_lookback_window()
     state.selected_pair.calc_spread()

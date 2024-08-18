@@ -122,7 +122,7 @@ def setup_trading_display(display):
         return
     
     display.header(f"{state.selected_pair.ticker1} - {state.selected_pair.ticker2} pairs strategy results")
-    display.write(f"Parameters: spread model = {state.selected_pair.model}, lookback window = {state.selected_pair.lookback_window}")
+    display.write(f"Parameters: spread model = {state.selected_pair.model}, hedge ratio method = {state.selected_pair.method}, lookback window = {state.selected_pair.lookback_window}")
     
     plots_col, results_col = display.columns([0.8, 0.2])
     

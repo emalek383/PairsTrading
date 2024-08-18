@@ -110,6 +110,7 @@ def plot_all(pair):
         Figure with the three plots in different grids.
 
     """
+    
     # Create figure and grid
     fig = plt.figure(figsize=(15, 10))
     gs = gridspec.GridSpec(3, 1, height_ratios=[1, 3, 2])
@@ -132,7 +133,13 @@ def plot_all(pair):
     # Main strategy subplot
     ax_strategy = fig.add_subplot(gs[1], sharex=ax_trades)
     ax_strategy.plot(pair.rolling_spread, label='Rolling Spread')
-    ax_strategy.plot(pair.spread_mave, label=f'{pair.lookback_window}-Day Moving Average (MAVE)', color = 'black')
+    
+    if pair.method == 'lookback':
+        mave_label = f'{pair.lookback_window}-Day Moving Average (MAVE)'
+    else:
+        mave_label = 'Kalman-Filter moving average (MAVE)'
+        
+    ax_strategy.plot(pair.spread_mave, label = mave_label, color = 'black')
     ax_strategy.plot(pair.spread_mave + pair.upper_entry * pair.std_rolling_spread, 
                      color='red', linestyle='--', label=f'MAVE + {pair.upper_entry} * Vol')
     ax_strategy.plot(pair.spread_mave + pair.lower_entry * pair.std_rolling_spread, 

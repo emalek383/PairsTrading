@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from helper import calc_APR, calc_Sharpe, calc_max_drawdown, check_stationarity
+from pykalman import KalmanFilter
 
 class PairsTrading():
     """
@@ -35,6 +36,8 @@ class PairsTrading():
         Hedge ratio as computed from the OLS of levels2 vs levels1 (since for ratio method hedge_ratio = 1)
     lin_reg_intercept : float
         Intercept of OLS of levels2 vs levels1.
+    method : 
+        Estimation method for the rolling hedge ratio ('lookback' or 'kalman').
     rolling_hedge_ratio : pd.Series
         The rolling hedge ratio (regression coefficient) of levels2 vs levels1 calculating only using data in lookback window.
     rolling_spread : pd.Series
@@ -46,7 +49,13 @@ class PairsTrading():
     stand_rolling_spread : pd.Series
         Standardised rolling spread in the lookback window, i.e. mean = 0 and std = 1.
     half_life : float
-        Half-life of the spread over whole time period calculated by fitting an Ohrenstein-Uhlenbeck process.
+        Half-life of the spread over whole time period calculated by fitting an Ornstein-Uhlenbeck process.
+    self.kf : pykalman.KalmanFilter
+        KalmanFilter object to run KalmanFilter analysis.
+    self.kalman_hedge_ratio :
+        Rolling hedge ratio computed using a Kalman Filter.
+    self.kalman_intercept :
+        Intercept of the regression equation predicted by a Kalman Filter.
     signals : pd.Series
         Long/short trading signals.
     portfolio : pd.DataFrame
@@ -63,17 +72,25 @@ class PairsTrading():
     Methods
     -------
     setup_lookback_window():
-        Setup the lookback window by calculating the half-life from the Ohrenstein-Uhlenbeck process.
+        Setup the lookback window by calculating the half-life from the Ornstein-Uhlenbeck process.
     calc_hedge_ratio():
         Calculate the hedge ratio from the OLS regression of levels2 vs levels1.
-    calc_rolling_hedge_ratio():
+    calc_lookback_rolling_hedge_ratio():
         Calculate the rolling hedge ratio for the spread from the OLS regression of levels2 vs levels1 inside the lookback window.
     calc_spread():
         Calculate the spread.
-    calc_rolling_spread():
+    calc_lookback_rolling_spread():
         Calculate the rolling spread in the lookback window, as well as its moving average, standard deviation and standardised form.
+    calc_rolling_spread():
+        Calculate the rolling spread either using a lookback window or a Kalman filter, including its moving average, standard deviation and standardised form.
+    setup_kalman_filter():
+        Setup a Kalman Filter to compute the rolling hedge ratio.
+    calc_kalman_hedge_ratio():
+        Calculate the rolling hedge ratio using a Kalman Filter.
+    calc_kalman_spread():
+        Calculate the spread using a Kalman Filter, as well as the intercept predicted by the Kalman Filter (proxy for the moving average), standard deviation and standardised form..
     calc_half_life():
-        Calculate the half-life by fitting the spread to an Ohrenstein-Uhlenbeck process.
+        Calculate the half-life by fitting the spread to an Ornstein-Uhlenbeck process.
     create_trading_signals():
         Create the trading signals for the pairs trading strategy.
     calc_PnL():
@@ -81,7 +98,7 @@ class PairsTrading():
     
     """
     
-    def __init__(self, asset1, asset2, model = 'linear', lookback_window = None, upper_entry = 1, lower_entry = -1):
+    def __init__(self, asset1, asset2, model = 'linear', method = 'lookback', lookback_window = None, upper_entry = 1, lower_entry = -1):
         """
         Construct the attributes of the PairsTrading object.
 
@@ -93,6 +110,8 @@ class PairsTrading():
             Prices of asset2 over the time period we're interested in
         model : str, optional
             What form of spread ('linear', 'log', 'ratio') will be used for the trading signal. The default is 'linear'.
+        method : str, optional
+            Estimation method for the rolling hedge ratio ('lookback' or 'kalman'). The default is 'lookback'.
         lookback_window : int, optional
             Number of days in the lookback window for calculating rolling quantities (rolling hedge ratio, spread, ...). The default is None.
         upper_entry : float, optional
@@ -105,7 +124,7 @@ class PairsTrading():
         None.
 
         """
-        
+        # General analysis of pairs attributes
         self.asset1 = asset1
         self.asset2 = asset2
         self.ticker1 = asset1.name
@@ -121,6 +140,9 @@ class PairsTrading():
         self.hedge_ratio = None
         self.lin_reg_hedge_ratio = None
         self.lin_reg_intercept = None
+        
+        self.method = method
+        # Rolling attributes
         self.rolling_hedge_ratio = pd.Series()
         self.spread = pd.Series()            
         self.lookback_window = lookback_window
@@ -129,6 +151,11 @@ class PairsTrading():
         self.std_rolling_spread = pd.Series()
         self.stand_rolling_spread = pd.Series()
         self.half_life = None
+        # Kalman attributes
+        self.kf = None
+        self.kalman_hedge_ratio = None
+        self.kalman_intercept = None
+        # Trades and signals attributes
         self.upper_entry = upper_entry
         self.lower_entry = lower_entry
         self.signals = pd.Series()
@@ -138,9 +165,55 @@ class PairsTrading():
         self.APR = None
         self.max_drawdown = None
     
+    def setup_kalman_filter(self, delta = 1e-5, obs_cov = 1e-3):
+        """
+        Setup the kalman filter for estimating the hedge ratio and spread.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        # Setup initial transition covariance and initial state mean and cov as 0 & 1
+        obs_cov = obs_cov
+        trans_cov = delta / (1 - delta) * np.eye(2)
+        obs_mat = sm.add_constant(self.levels1.values, prepend=False)[:, np.newaxis]
+        initial_state_mean = np.zeros(2)
+        initial_state_cov = np.eye(2)
+        
+        self.kf = KalmanFilter( 
+            n_dim_obs = 1, 
+            n_dim_state = 2,
+            initial_state_mean = initial_state_mean,
+            initial_state_covariance = initial_state_cov,
+            transition_matrices = np.eye(2),
+            observation_matrices = obs_mat,
+            observation_covariance = obs_cov,
+            transition_covariance = trans_cov
+            )
+
+        self.kalman_state_means, self.kalman_state_covs = self.kf.filter(self.levels2.values)
+        
+    def calc_kalman_hedge_ratio(self):
+        """
+        Calculate the rolling hedge ratio using a Kalman Filter.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        if not self.kf:
+            self.setup_kalman_filter()
+            
+        self.kalman_hedge_ratio = pd.Series(self.kalman_state_means[:, 0], index = self.levels1.index)
+        self.kalman_intercept = pd.Series(self.kalman_state_means[:, 1], index = self.levels1.index)
+    
     def setup_lookback_window(self):
         """
-        Setup the lookback window by calculating the half-life from the Ohrenstein-Uhlenbeck process. Update the attribute directly.
+        Setup the lookback window by calculating the half-life from the Ornstein-Uhlenbeck process. Update the attribute directly.
 
         Returns
         -------
@@ -178,7 +251,7 @@ class PairsTrading():
 
         return self.hedge_ratio
     
-    def calc_rolling_hedge_ratio(self, lookback_window = None):
+    def calc_lookback_rolling_hedge_ratio(self, lookback_window = None):
         """
         Calculate the hedge ratio using OLS of levels2 vs levels1 during the lookback window. This will be used in the trading strategy.
 
@@ -238,10 +311,10 @@ class PairsTrading():
 
         return spread
 
-    def calc_rolling_spread(self, lookback_window = None):
+    def calc_lookback_rolling_spread(self, lookback_window = None):
         """
-        Calculate the rolling spread between levels2 and levels 1 using only the data in the lookback window. This is used for the trading strategy.
-        Also calculates the moving average of the rolling spread, its mean and standard deviation and its standardised form (mean = 0 and std = 1).
+        Calculate the rolling spread between levels2 and levels1 using only the data in the lookback window. This is used for the trading strategy.
+        Also calculate the moving average of the rolling spread, its mean and standard deviation and its standardised form (mean = 0 and std = 1).
 
         Parameters
         ----------
@@ -250,17 +323,17 @@ class PairsTrading():
 
         Returns
         -------
-        rolling_spread : pd.Series
-            Rolling spread.
+        stand_rolling_spread : pd.Series
+            Rolling spread standardised to mean 0 and std 1.
 
         """
         
         if lookback_window and self.lookback_window != lookback_window:
             self.lookback_window = lookback_window
-            self.calc_rolling_hedge_ratio()
+            self.calc_lookback_rolling_hedge_ratio()
 
         if self.rolling_hedge_ratio.empty:
-            self.calc_rolling_hedge_ratio()
+            self.calc_lookback_rolling_hedge_ratio()
 
         if self.model == 'ratio':
             rolling_spread = self.levels2 / self.levels1
@@ -273,14 +346,66 @@ class PairsTrading():
         std_rolling_spread = self.rolling_spread.rolling(window = self.lookback_window).std()
         self.std_rolling_spread = std_rolling_spread
         self.std_rolling_spread.name = 'Spread Moving Average Standard Deviation'
-        self.stand_rolling_spread = (self.rolling_spread - self.spread_mave) / std_rolling_spread
-        self.stand_rolling_spread.name = 'Standardised Rolling Spread'
+        stand_rolling_spread = (self.rolling_spread - self.spread_mave) / std_rolling_spread
+        stand_rolling_spread.name = 'Standardised Rolling Spread'
 
-        return rolling_spread
+        return stand_rolling_spread
+    
+    def calc_kalman_spread(self):
+        """
+        Calculate the spread between levels2 and levels1 using a Kalman Filter. This is used for the trading strategy.
+        Also use the intercept predicted by the Kalman Filter as the "moving average" of the spread, but compute the standard 
+        deviation of the spread using a lookback window. Calculate the spread in standardised form (mean = 0, std = 1),
+
+        Returns
+        -------
+        stand_rolling_spread : pd.Series
+            Rolling spread standardised to mean 0 and std 1.
+
+        """
+        
+        if self.kalman_hedge_ratio is None:
+            self.calc_kalman_hedge_ratio()
+            
+        self.rolling_spread = self.levels2 - self.kalman_hedge_ratio.shift(1) * self.levels1
+        
+        self.spread_mave = self.kalman_intercept.shift(1)
+        self.spread_mave.name = 'Kalman Filter Spread Expectation'
+        
+        self.std_rolling_spread = self.rolling_spread.rolling(window = self.lookback_window).std()
+        self.std_rolling_spread.name = 'Kalman Fiter Spread Standard Deviation'
+        
+        stand_rolling_spread = (self.rolling_spread - self.spread_mave) / self.std_rolling_spread
+        
+        stand_rolling_spread.name = 'Standardised Kalman Filter Spread'
+
+        return stand_rolling_spread
+    
+    def calc_rolling_spread(self, lookback_window = None):
+        """
+        Calculate the rolling spread either using a lookback window or a Kalman filter.
+
+        Parameters
+        ----------
+        lookback_window : int, optional
+            Size of the lookback window to be used in case of using the lookbakc method. The default is None.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        if self.method == 'lookback' or self.model == 'ratio':
+            self.stand_rolling_spread = self.calc_lookback_rolling_spread(lookback_window)
+        
+        else: # compute using Kalman filter
+            self.stand_rolling_spread = self.calc_kalman_spread()
+            self.rolling_hedge_ratio = self.kalman_hedge_ratio
 
     def calc_half_life(self):
         """
-        Estimate the half-life of mean reversion by fitting the spread to an Ohrenstein-Uhlenbeck process.
+        Estimate the half-life of mean reversion by fitting the spread to an Ornstein-Uhlenbeck process.
 
         Returns
         -------
@@ -325,7 +450,7 @@ class PairsTrading():
 
         """
         
-        if lookback_window:
+        if self.method == 'lookback' and lookback_window:
             self.lookback_window = lookback_window
         
         if upper_entry:
@@ -464,8 +589,9 @@ class PairsTrading():
         
         self.Sharpe = calc_Sharpe(self.portfolio['returns'])
         self.APR = calc_APR(self.portfolio['returns'])
-        cum_returns_after_first_trade = self.portfolio['cum_returns'][self.trades.iloc[0]['exit_date']:]
-        self.max_drawdown = calc_max_drawdown(cum_returns_after_first_trade)
+        #cum_returns_after_first_trade = self.portfolio['cum_returns'][self.trades.iloc[0]['exit_date']:]
+        #self.max_drawdown = calc_max_drawdown(cum_returns_after_first_trade)
+        self.max_drawdown = calc_max_drawdown(self.portfolio['cum_returns'])
 
         return self.portfolio, self.trades
 
