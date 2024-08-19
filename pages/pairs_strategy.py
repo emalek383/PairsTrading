@@ -1,5 +1,6 @@
 import streamlit as st
 from setup_forms import setup_pairs_selection_form
+from process_forms import process_stock_form
 from setup_displays import setup_pairs_display, setup_trading_display
 
 state = st.session_state    
@@ -27,7 +28,17 @@ with st.sidebar:
 pairs_display = st.container(border = False)
 trading_display = st.container(border = False)    
     
+if not state.loaded_stocks:
+    errors = process_stock_form()
+    if errors:
+        pairs_display.error(errors)
+    state.loaded_stocks = True
+
 setup_pairs_selection_form(pairs_selection_form)
 
-setup_pairs_display(pairs_display)
-setup_trading_display(trading_display)
+if not state.selected_pair:
+    pairs_display.write("Choose a pair on the left to begin analysis.")
+    
+else:
+    setup_pairs_display(pairs_display)
+    setup_trading_display(trading_display)
