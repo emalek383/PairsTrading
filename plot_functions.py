@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.dates as mdates
 
 def plot_spread(pair):
     """
@@ -83,7 +84,9 @@ def plot_regression(pair):
     fig, ax = plt.subplots(figsize = (15, 5))
     fig.suptitle(pair.ticker2 + ' vs ' + pair.ticker1)
     
-    ax.scatter(pair.levels2, pair.levels1, label = '_')
+    timestamps = mdates.date2num(pair.levels1.index)
+    
+    scatter = ax.scatter(pair.levels2, pair.levels1, c = timestamps, cmap = 'viridis', label = '_')
     if pair.model == 'log':
         log_pre = 'Log '
     else:
@@ -91,6 +94,12 @@ def plot_regression(pair):
     ax.set(ylabel = log_pre + 'Prices ' + pair.ticker2)
     ax.set(xlabel = log_pre + 'Prices ' + pair.ticker1)
     ax.plot(pair.lin_reg_intercept + pair.lin_reg_hedge_ratio * pair.levels1, pair.levels1, color = 'black', label = 'Regression Line')
+    
+    cbar = plt.colorbar(scatter)
+    cbar.set_label('Date')
+    cbar.ax.yaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%Y'))
+    cbar.ax.yaxis.set_major_locator(mdates.AutoDateLocator())
+    
     ax.legend()
     
     return fig
@@ -121,12 +130,12 @@ def plot_all(pair):
     winning_trades = trades[trades['pnl'] >= 0]
     losing_trades = trades[trades['pnl'] < 0]
     
-    ax_trades.scatter(winning_trades['exit_date'], winning_trades['pnl'], 
+    ax_trades.scatter(winning_trades['exit_date'], winning_trades['return'] * 100, 
                       color='green', s=50, zorder=5, label='Winning Trade')
-    ax_trades.scatter(losing_trades['exit_date'], losing_trades['pnl'], 
+    ax_trades.scatter(losing_trades['exit_date'], losing_trades['return'] * 100, 
                       color='red', s=50, zorder=5, label='Losing Trade')
     
-    ax_trades.set_ylabel('Trade PnL')
+    ax_trades.set_ylabel('Trade PnL (%)')
     ax_trades.legend(loc='upper left')
     ax_trades.set_title('Trades')
 
@@ -156,8 +165,8 @@ def plot_all(pair):
 
     # Cummulative returns
     ax_cum_returns = fig.add_subplot(gs[2], sharex=ax_trades)
-    ax_cum_returns.plot(pair.portfolio['cum_returns'], color = 'black')
-    ax_cum_returns.set(ylabel = 'Cummulative Returns')
+    ax_cum_returns.plot(pair.portfolio['cum_returns'] * 100, color = 'black')
+    ax_cum_returns.set(ylabel = 'Cummulative Returns (%)')
     ax_cum_returns.set(xlabel = 'Date')
     ax_cum_returns.set_title('Cummulative Returns')
 
